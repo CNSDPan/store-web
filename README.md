@@ -3,7 +3,7 @@
     https://github.com/haostart/websocket-chat
 ### 该项目进行了二次修改，与作者提供的代码仓由较大的变动
 ### 搭配提供的服务端使用体验会友好点
-    https://github.com/CNSDPan/store-chat
+    https://github.com/CNSDPan/store-web.git
 
 ## 项目说明
 
@@ -34,7 +34,7 @@
 1. 克隆项目到本地：
 
    ```bash
-   git clone https://github.com/CNSDPan/store-chat-web
+   git clone git@github.com:CNSDPan/store-web.git
    ```
 
 2. 进入项目目录：
