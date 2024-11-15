@@ -202,8 +202,15 @@
                                     <div class="loading-chat" v-show="loading">-- 加载更多 --</div>
                                     <div class="content" ref="content">
                                         <div v-for="item,$index in chatDetail.items" :key="$index" ref="innerRef">
+                                            <!-- 成为会员消息 -->
+                                            <div v-if="item.method == 'become'" style="padding: 10px 10px;color: #909399;font-size:12px">
+                                                <el-row class="row-bg" type="flex" justify="center" align="middle">
+                                                    <span style="margin-right: 10px">欢迎 {{ user.name }} 成为本店会员</span>
+                                                </el-row>
+                                            </div>
+
                                             <!-- 左边 -->
-                                            <div v-if="user.uid != item.userId" style="margin-left: 10px;margin-bottom: 8px;">
+                                            <div v-else-if="user.uid != item.userId" style="padding: 10px 10px;">
                                                 <el-row class="row-bg" type="flex" align="middle">
                                                     <el-avatar size="default" shape="square" fit="fit">{{ item.userName }}</el-avatar>
                                                     <span style="margin-left: 10px">{{ item.createAt }}</span>
@@ -217,7 +224,7 @@
                                             </div>
 
                                             <!-- 右边 -->
-                                            <div v-else style="margin-right: 10px;margin-bottom: 8px;">
+                                            <div v-else style="padding: 10px 10px;">
                                                 <el-row class="row-bg" type="flex" justify="end" align="middle">
                                                     <span style="margin-right: 10px">{{ item.createAt }}</span>
                                                     <el-avatar size="default" shape="square" fit="fit"> {{ user.name }} </el-avatar>
@@ -567,6 +574,7 @@ export default {
                         this.chatDetail.noMore = true
                     }
                     result.data.rows.forEach((element,index) => {
+                        element['method'] = "normal";
                         this.chatDetail.items.unshift(element)
                     });
 
@@ -790,14 +798,13 @@ export default {
             socketManager.close();
         },
         handleWsError(e) {
-            console.log("websocket error 前端错误", e);
             this.message = "连接错误,请重连或者检查网络!";
             socketManager.close();
         },
         handleWsMessage(e) {
             this.goLogin()
             let result = JSON.parse(e.data);
-            console.log("websocket message 前端接收", result);
+            console.log(result)
             if (result.operate ==MessageType.OPERATE_GROUP){
                 if (this.storeChatItems.items.findIndex(item=> item.storeId == result.event.data.storeId) !== -1){
                     var idx = this.storeChatItems.items.findIndex(item=> item.storeId == result.event.data.storeId)
@@ -836,8 +843,9 @@ export default {
                     "timestamp": result.timestamp,
                     "userId": result.event.data.sendUserId,
                     "userName": result.event.data.sendUserName,
+                    "method": result.method,
                 })
-                
+                console.log(this.chatDetail.items)
             }
         }
     },
