@@ -111,12 +111,12 @@ const MessageType = {
     MESSAGE_CLIENT_EXIT: "MESSAGE_CLIENT_EXIT",
 
 
-    OPERATE_SINGLE : 2, // 私信类型
-    OPERATE_GROUP : 3, // 群聊类型
+    OPERATE_SINGLE : 1, // 私信类型
+    OPERATE_GROUP : 2, // 群聊类型
     OPERATE_CONNTION : 10, // 连接类型
 
-    METHOD_NORAML : "Normal", // 消息事件
-    METHOD_ENTER : "Enter", // 连接事件
+    METHOD_NORAML : "normal", // 消息事件
+    METHOD_ENTER : "enter", // 连接事件
     METHOD_OUT : "Out", // 断开事件
     METHOD_PM : "PM" //压测
 };

@@ -11,7 +11,7 @@ class SocketManager {
     this.socket.value = new WebSocket(url);
 
     this.socket.value.onopen = () => {
-      console.log('WebSocket connection opened');
+      // console.log('WebSocket connection opened');
     };
 
     this.socket.value.onclose = (event) => {
@@ -35,5 +35,5 @@ class SocketManager {
 const socketManager = new SocketManager();
 // socketManager.connect('ws://127.0.0.1:9000/ws'); // Replace with the actual WebSocket URL
 
-console.log('socketManager', socketManager);
+// console.log('socketManager', socketManager);
 export { socketManager };

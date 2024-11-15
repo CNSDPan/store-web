@@ -237,7 +237,23 @@
                     <el-divider style="margin: 0px"></el-divider>
                     <!-- 输入框 -->
                     <el-row style="height: calc(20% - 2px);">
-                        
+                        <el-col class="input-area">
+                            <el-input
+                                v-model="sendChatMessage"
+                                type="textarea"
+                                placeholder="请输入..."
+                                rows="4"
+                                @keyup.enter="sendMessage"
+                                ref="inputRef"
+                            ></el-input>
+                            <el-button
+                                class="send-btn"
+                                type="primary"
+                                @click="sendMessage"
+                                :disabled="!sendChatMessage"
+                                >Send</el-button
+                            >
+                        </el-col>
                     </el-row>
                 </el-col>
                 <el-col :span="6" style="height: 100%;border-left: 1px var(--el-border-color) var(--el-border-style);">
@@ -306,8 +322,21 @@
     color: #909399;
     padding: 10px;
 }
+
+.input-area {
+  display: flex;
+  padding: 5px;
+  background-color: #f1f1f1;
+  border-top: 1px solid #e0e0e0;
+}
+
+.send-btn {
+  margin-left: 10px;
+  align-self: flex-end;
+}
 </style>
 <script>
+import { MessageType } from "../assets/entity.js";
 import { ref,onMounted, nextTick } from 'vue';
 import { ElMessage,ElLoading,ElMessageBox  } from 'element-plus'
 import { userInfo } from '@/api/user.js'
@@ -379,6 +408,7 @@ export default {
                 timestamp:"",
                 items:[],
             },
+            sendChatMessage:"",
             myApp:{
                 friend:[],
                 storeItem:[],
@@ -418,7 +448,7 @@ export default {
         },500)
 
         setTimeout(()=>{
-            // this.initWs()
+            this.initWs()
         },700)
     },
     computed: {
@@ -695,6 +725,38 @@ export default {
             }
         },
 
+        // 发送消息
+        sendMessage(){
+            if (this.sendChatMessage.trim()) {
+                if (this.chatDetail.storeId == ""){
+                    ElMessageBox.alert(
+                        "请选择群",
+                        "消息中心"
+                    )
+                    this.sendChatMessage = ''; // 清空输入框
+                    return
+                }else{
+                    let sendType = {
+                        operate: MessageType.OPERATE_GROUP,
+                        method: MessageType.METHOD_NORAML,
+                        storeId: this.chatDetail.storeId,
+                        sendUserId: this.user.uid,
+                        receiveUserId: "0",
+                        body:{
+                            operate: MessageType.OPERATE_GROUP,
+                            method: MessageType.METHOD_NORAML,
+                            responseTime: new Date().toISOString(), // ISO 8601 格式的日期时间
+                            event: {
+                                params: this.sendChatMessage.trim()
+                            }
+                        },
+                    }
+                    ws.send(JSON.stringify(sendType))
+                    this.sendChatMessage = ''; // 清空输入框
+                }
+                
+            }
+        },
 
         /*****************************WS事件*********************************/
 
@@ -721,7 +783,6 @@ export default {
             ws.addEventListener("message", this.handleWsMessage.bind(this), false);
         },
         handleWsOpen(e) {
-            this.message = "连接成功";
             this.message = "在线";
         },
         handleWsClose(e) {
@@ -735,22 +796,50 @@ export default {
         },
         handleWsMessage(e) {
             this.goLogin()
-            let data = JSON.parse(e.data);
-            console.log("websocket message 前端接收", data);
-            // if (result.operate == MessageType.OPERATE_SINGLE){
-            //     if (result.method == MessageType.METHOD_NORAML){
-            //         this.setText(agrs,result)
-            //     }else{
-            //         this.resultSingleMsg(result)
-            //     }
-            // } else if (result.operate == MessageType.OPERATE_GROUP){
-            //     this.setText(agrs,result)
-            // }
+            let result = JSON.parse(e.data);
+            console.log("websocket message 前端接收", result);
+            if (result.operate ==MessageType.OPERATE_GROUP){
+                if (this.storeChatItems.items.findIndex(item=> item.storeId == result.event.data.storeId) !== -1){
+                    var idx = this.storeChatItems.items.findIndex(item=> item.storeId == result.event.data.storeId)
+                    this.storeChatItems.items[idx].timestamp = result.timestamp
+                    this.storeChatItems.items[idx].message = result.event.data.message
+                    // 排序
+                    this.sortedData()
+                    // 若消息是当前窗口则加入
+                    this.addChatLog(result)
+                }
+            }
             
             return;
         },
 
         /*****************************WS事件*********************************/
+
+        // 排序后的消息数据
+        sortedData() {
+            let items = this.storeChatItems.items
+            items.sort((a, b) => {
+                // 将 timestamp 字符串转为数字进行比较
+                return parseInt(b.timestamp) - parseInt(a.timestamp);
+            });
+            this.storeChatItems.items = items
+        },
+        addChatLog(result){
+            if (this.chatDetail.storeId == result.event.data.storeId){
+                this.chatDetail.initStatus = 0
+                // this.chatDetail.timestamp = result.timestamp
+                this.chatDetail.items.push({
+                    "createAt": result.responseTime,
+                    "message":  result.event.data.message,
+                    "storeId":  result.event.data.storeId,
+                    "storeName": this.chatDetail.name,
+                    "timestamp": result.timestamp,
+                    "userId": result.event.data.sendUserId,
+                    "userName": result.event.data.sendUserName,
+                })
+                
+            }
+        }
     },
     activated(){
         
